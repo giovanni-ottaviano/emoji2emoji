@@ -36,23 +36,6 @@ def initialize_RNGs(seed: int, use_cuda: bool) -> None:
         torch.cuda.manual_seed(seed)
 
 
-# CHECK - CURRENTLY NOT WORKING
-# def cycleGAN_scheduler(optimizer, epoch, epoch_decay):
-
-#     """Return a scheduler with proper learning rate based on current training epoch """
-
-#     def lr_rule(epoch):
-
-#         # questi accorgimenti sono necessari se si vuole poter spezzare il training. Per un training unico non servirebbero
-#         # si potrebbe anche usare un assert, ma a qul punto il programma si bloccherebbe
-#         #weight = (epoch - opts.epochs)/(opts.epoch_decay + 1.0)
-#         weight = (epoch - 100.0) / (epoch_decay + 1.0)
-
-#         return 1. - np.max(0., weight)
-
-#     scheduler = LambdaLR(optimizer, lr_lambda=lr_rule)
-
-#     return scheduler
 
 def cycleGAN_scheduler(optimizer, epoch, epoch_decay):
 
@@ -75,8 +58,6 @@ def cycleGAN_scheduler(optimizer, epoch, epoch_decay):
 def print_cl_options(opts: argparse.Namespace) -> None:
 
     """Print the given command-line arguments in tabular form"""
-
-    # dict_opts = vars(opts) # rimuovi e metti prima di .items()
     
     list_opts = [(k, v) for k, v in vars(opts).items()]
 
@@ -110,9 +91,9 @@ def make_checkpoint(
     G_YX: torch.nn.Module,
     D_X: torch.nn.Module,
     D_Y: torch.nn.Module,
-    optimizer_G: torch.Optimizer,
-    optimizer_D: torch.Optimizer,
-    scheduler_G: torch.Optimizer,
+    optimizer_G: torch.optim.Optimizer,
+    optimizer_D: torch.optim.Optimizer,
+    scheduler_G: torch.optim.Optimizer,
     checkpoint_dir
 ):
     
@@ -142,7 +123,7 @@ def make_checkpoint(
 
 
 def load_models(
-    load: str, # questo forse da riscrivere come path
+    load: str,
     g_conv_dim: int,
     d_conv_dim: int,
     init_zero_weights: bool,
@@ -195,7 +176,6 @@ def merge_images(sources, targets, batch_size, k=10):
         merged[:, i*h:(i+1)*h, (j*2+1)*h:(j*2+2)*h] = t
 
     return merged.transpose(1, 2, 0)/2. + 0.5
-    #return merged.transpose(1, 2, 0)
 
 
 def save_samples(

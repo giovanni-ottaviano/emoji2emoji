@@ -1,3 +1,4 @@
+# Implementation convolutional and deconvolutional layer
 import torch
 import torch.nn as nn
 
@@ -10,7 +11,7 @@ def convolutional_layer(
     padding: int=1,
     batch_norm: bool=True,
     init_zero_weights: bool=False
-):
+) -> nn.Sequential:
     
     """Return a convolutional layer with (optional) batch normalization"""
 
@@ -41,7 +42,7 @@ def deconvolutional_layer(
     stride: int=2,
     padding: int=1,
     batch_norm: bool=True
-):
+) -> nn.Sequential:
     
     """Return a transposed-convolutional (deconvolutional) layer with (optional) batch normalization"""
 

@@ -2,10 +2,7 @@
 # https://arxiv.org/pdf/1703.10593.pdf
 # https://arxiv.org/pdf/1611.07004.pdf
 
-
-# implementazione del discriminatore come da articolo (PatchGAN)
-# TUTTE QUESTE CLASSI POI POSSONO ESSERE RESE PIù FLESSIBILI E MENO HARD CODED
-
+# Implementation of ResidualBlock, Generator and Discriminator (PatchGAN)
 import torch.nn as nn
 
 
@@ -64,25 +61,6 @@ class Discriminator(nn.Module):
 
         model += [nn.Conv2d(filters, 1, kernel_size, padding=padding)]
         self.model = nn.Sequential(*model)
-
-        # self.model = nn.Sequential(
-        #     nn.Conv2d(in_channels, 64, 4, stride=2, padding=1),
-        #     nn.LeakyReLU(0.2, inplace=True),
-
-        #     nn.Conv2d(64, 128, 4, stride=2, padding=1),
-        #     nn.InstanceNorm2d(128), 
-        #     nn.LeakyReLU(0.2, inplace=True),
-
-        #     nn.Conv2d(128, 256, 4, stride=2, padding=1),
-        #     nn.InstanceNorm2d(256), 
-        #     nn.LeakyReLU(0.2, inplace=True),
-
-        #     nn.Conv2d(256, 512, 4, padding=1),
-        #     nn.InstanceNorm2d(512), 
-        #     nn.LeakyReLU(0.2, inplace=True),
-
-        #     nn.Conv2d(512, 1, 4, padding=1)
-        # )
     
 
     def forward(self, x):
@@ -92,7 +70,6 @@ class Discriminator(nn.Module):
         return self.model(x)
 
 
-# RINOMINA ncf con nume più parlante
 class Generator(nn.Module):
 
     """Generator class for cyclic generative adversarial architecture (CycleGAN)"""
@@ -100,7 +77,7 @@ class Generator(nn.Module):
     def __init__(self, in_channels=3, ncf=64):
         super(Generator, self).__init__()
 
-        n_resblocks = 6 # questo potrebbe essere deciso a seconda della grandezza dell'immagine, come nell'articolo # METTILO NEI TO DO
+        n_resblocks = 6
 
         # Initial convolutional block       
         model = [

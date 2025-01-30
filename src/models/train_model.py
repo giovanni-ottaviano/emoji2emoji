@@ -1,13 +1,17 @@
 import os
+import sys
 import itertools
 from typing import Dict
 import torch
 from torchinfo import summary
 
+# Setting path
+sys.path.append('..')
+
 # -------------- Custom Module --------------- #
-import utils
-from argparse_utils import create_parser
-from data_loader import get_emoji_loader
+import utils.utils as ut
+from utils.argparse_utils import create_parser
+from data.data_loader import get_emoji_loader
 from models import Generator, Discriminator
 from loss import (
     discriminator_loss,
@@ -24,7 +28,7 @@ def training_loop(
     test_loader_Y: torch.utils.data.DataLoader,
     input_opts: Dict[str, str],
     use_cuda: bool
-):
+) -> None:
 
     """
         Run the training loop:
@@ -50,10 +54,10 @@ def training_loop(
     else:
         checkpoint = None
 
-        D_X.apply(utils.weights_init_normal)
-        D_Y.apply(utils.weights_init_normal)
-        G_XY.apply(utils.weights_init_normal)
-        G_YX.apply(utils.weights_init_normal)
+        D_X.apply(ut.weights_init_normal)
+        D_Y.apply(ut.weights_init_normal)
+        G_XY.apply(ut.weights_init_normal)
+        G_YX.apply(ut.weights_init_normal)
 
     if input_opts['print_models_summary']:
         summary(G_XY, input_size=(input_opts['batch_size'], 3, input_opts['image_size'], input_opts['image_size']))
@@ -77,7 +81,7 @@ def training_loop(
     # Set epochs and lr scheduler for generator
     n_epochs = 1 if checkpoint is None else checkpoint['epoch']
 
-    g_scheduler = utils.cycleGAN_scheduler(g_optimizer, n_epochs, input_opts['epoch_decay'])
+    g_scheduler = ut.cycleGAN_scheduler(g_optimizer, n_epochs, input_opts['epoch_decay'])
 
     if input_opts['continue_training']:
         g_optimizer.load_state_dict(checkpoint['optimizer_state_dict_G'])
@@ -102,7 +106,6 @@ def training_loop(
     iters_checkpoint = input_opts['checkpoint_every'] * iters_per_epoch
     iters_samples = input_opts['sample_every'] * iters_per_epoch
 
-    # FORSE CONVIENE DISACCOPPIARE MEGLIO ITERAZIONE ED EPOCA
     for iteration in range(1, tot_iters + 1):
         if iteration % iters_per_epoch == 0:
             iter_X = iter(loader_X)
@@ -186,11 +189,11 @@ def training_loop(
         # Save the generated samples
         # if n_epochs % iters_samples == 0:
         if iteration % 100 == 0:
-            utils.save_samples(iteration, G_XY, G_YX, fixed_X, fixed_Y, input_opts['batch_size'], input_opts['sample_dir'], use_cuda)
+            ut.save_samples(iteration, G_XY, G_YX, fixed_X, fixed_Y, input_opts['batch_size'], input_opts['sample_dir'], use_cuda)
 
         # Save model's parameters
         if n_epochs % iters_checkpoint == 0:
-            utils.make_checkpoint(n_epochs, G_XY, G_YX, D_X, D_Y, g_optimizer, d_optimizer, g_scheduler, input_opts['checkpoint_dir'])
+            ut.make_checkpoint(n_epochs, G_XY, G_YX, D_X, D_Y, g_optimizer, d_optimizer, g_scheduler, input_opts['checkpoint_dir'])
             print(f"Checkpoint created at iteration {iteration} (epoch {n_epochs}).")
 
 
@@ -202,13 +205,13 @@ def main():
     parser = create_parser()
     opts = parser.parse_args()
 
-    utils.print_cl_options(opts)
+    ut.print_cl_options(opts)
 
     if opts.use_cuda and not torch.cuda.is_available():
         raise ValueError("Option 'use_cuda' was selected but no GPU found")
 
     # Initialize random number generators
-    utils.initialize_RNGs(opts.seed, opts.use_cuda)
+    ut.initialize_RNGs(opts.seed, opts.use_cuda)
 
     # Create train and test dataloaders for images from the two domains X and Y
     loader_X, test_loader_X = get_emoji_loader(
