@@ -73,12 +73,11 @@ def create_parser() -> argparse.Namespace:
     parser.add_argument('--end_style', type=str, default='Windows', choices=['Apple','Windows','Facebook','Twitter'], help='Choose the type of images for ending domain')
 
     # Checkpoint and printing options
-    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints_cyclegan', help='Path to the checkpoint directory')
-    parser.add_argument('--sample_dir', type=str, default='samples_cyclegan', help='Path to the samples directory')
-    parser.add_argument('--load_dir', type=str, default='checkpoints_cyclegan', help='Path to the checkpoint directory (used only if continue_training parameter is given)')
+    parser.add_argument('--checkpoint_dir', type=str, default='../../checkpoints_cyclegan', help='Path to the checkpoint directory')
+    parser.add_argument('--sample_dir', type=str, default='../../samples_cyclegan', help='Path to the samples directory')
+    parser.add_argument('--load_dir', type=str, default='../../checkpoints_cyclegan', help='Path to the checkpoint directory (used only if continue_training parameter is given)')
     parser.add_argument('--log_step', type=positiveint, default=10, help='Number of steps before printing a log')
-    parser.add_argument('--sample_every', type=positiveint, default=1, help='Number of iteration steps before creating a sample')
-    parser.add_argument('--checkpoint_every', type=positiveint, default=1, help='Number of epochs before checkpoint')
+    parser.add_argument('--checkpoint_every', type=positiveint, default=1, help='Number of epochs before checkpoint and sample generation')
     parser.add_argument('--print_models_summary', action='store_true', default=False, help='Whether or not to print a short summary of model layers and parameters')  
       
 

@@ -44,12 +44,12 @@ def training_loop(
     G_YX = Generator()
 
     if input_opts['continue_training']:
-        checkpoint = torch.load(input_opts['checkpoint_dir'] + '/optimizer.pkl')
+        checkpoint = torch.load(f"{input_opts['checkpoint_dir']}/optimizer.pkl")
 
-        D_X.load_state_dict(torch.load(input_opts['checkpoint_dir'] + '/D_X.pkl'))
-        D_Y.load_state_dict(torch.load(input_opts['checkpoint_dir'] + '/D_Y.pkl'))
-        G_XY.load_state_dict(torch.load(input_opts['checkpoint_dir'] + '/G_XY.pkl'))
-        G_YX.load_state_dict(torch.load(input_opts['checkpoint_dir'] + '/G_YX.pkl'))
+        D_X.load_state_dict(torch.load(f"{input_opts['checkpoint_dir']}/D_X.pkl"))
+        D_Y.load_state_dict(torch.load(f"{input_opts['checkpoint_dir']}/D_Y.pkl"))
+        G_XY.load_state_dict(torch.load(f"{input_opts['checkpoint_dir']}/G_XY.pkl"))
+        G_YX.load_state_dict(torch.load(f"{input_opts['checkpoint_dir']}/G_YX.pkl"))
 
     else:
         checkpoint = None
@@ -81,15 +81,14 @@ def training_loop(
     # Set epochs and lr scheduler for generator
     n_epochs = 1 if checkpoint is None else checkpoint['epoch']
 
-    g_scheduler = ut.cycleGAN_scheduler(g_optimizer, n_epochs, input_opts['epoch_decay'])
+    g_scheduler = ut.cycleGAN_scheduler(g_optimizer, input_opts['epoch_decay'])
 
     if input_opts['continue_training']:
         g_optimizer.load_state_dict(checkpoint['optimizer_state_dict_G'])
         d_optimizer.load_state_dict(checkpoint['optimizer_state_dict_D'])
         g_scheduler.load_state_dict(checkpoint['scheduler_state_dict_G'])
 
-
-    # Data iters # GUARDA SE SI POSSONO CAMBIARE
+    # Data iters
     iter_X = iter(loader_X)
     iter_Y = iter(loader_Y)
     test_iter_X = iter(test_loader_X)
@@ -102,11 +101,16 @@ def training_loop(
 
     # Utils for training loop
     iters_per_epoch = min(len(iter_X), len(iter_Y))
+    start_iters = n_epochs * iters_per_epoch + 1
     tot_iters = input_opts['epochs'] * iters_per_epoch
     iters_checkpoint = input_opts['checkpoint_every'] * iters_per_epoch
-    iters_samples = input_opts['sample_every'] * iters_per_epoch
 
-    for iteration in range(1, tot_iters + 1):
+    print(f"Starting epoch: {n_epochs}")
+    print(f"Iterations per epoch: {iters_per_epoch}")
+    print(f"Iterations before checkpoint: {iters_checkpoint}")
+    
+    # Run training
+    for iteration in range(start_iters, tot_iters + 1):
         if iteration % iters_per_epoch == 0:
             iter_X = iter(loader_X)
             iter_Y = iter(loader_Y)
@@ -123,7 +127,7 @@ def training_loop(
         G_XY.train()
         G_YX.train()
 
-        # Generator's training
+        ### Generator's training ###
 
         g_optimizer.zero_grad()
 
@@ -159,12 +163,12 @@ def training_loop(
         g_optimizer.step()
 
 
-        # Discriminator's training
+        ### Discriminator's training ###
 
         # Train with real images
         d_optimizer.zero_grad()
 
-        # Compute loss idscriminator X
+        # Compute loss discriminator X
         fake_X = G_YX(images_Y)
         label_real_X = D_X(images_X)
         label_fake_X = D_X(fake_X.detach())
@@ -186,13 +190,9 @@ def training_loop(
         if iteration % input_opts['log_step'] == 0:
             print(f"Iteration [{iteration}/{tot_iters}] | D_X_loss: {D_X_loss.item():6.4f} | D_Y_loss: {D_Y_loss.item():6.4f} | G_loss: {g_loss.item():6.4f}")
 
-        # Save the generated samples
-        # if n_epochs % iters_samples == 0:
-        if iteration % 100 == 0:
-            ut.save_samples(iteration, G_XY, G_YX, fixed_X, fixed_Y, input_opts['batch_size'], input_opts['sample_dir'], use_cuda)
-
         # Save model's parameters
-        if n_epochs % iters_checkpoint == 0:
+        if iteration % iters_checkpoint == 0:
+            ut.save_samples(iteration, G_XY, G_YX, fixed_X, fixed_Y, input_opts['batch_size'], input_opts['sample_dir'], use_cuda)
             ut.make_checkpoint(n_epochs, G_XY, G_YX, D_X, D_Y, g_optimizer, d_optimizer, g_scheduler, input_opts['checkpoint_dir'])
             print(f"Checkpoint created at iteration {iteration} (epoch {n_epochs}).")
 
@@ -255,7 +255,6 @@ def main():
         'continue_training': opts.continue_training,
         'checkpoint_dir': opts.checkpoint_dir,
         'checkpoint_every': opts.checkpoint_every,
-        'sample_every': opts.sample_every,
         'sample_dir': opts.sample_dir,
         'log_step': opts.log_step,
         'print_models_summary': opts.print_models_summary

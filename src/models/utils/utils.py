@@ -8,6 +8,7 @@ from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR
 from tabulate import tabulate
 
+# -------------- Custom Module --------------- #
 from models import Generator, Discriminator
 
 
@@ -36,19 +37,16 @@ def initialize_RNGs(seed: int, use_cuda: bool) -> None:
         torch.cuda.manual_seed(seed)
 
 
-
-def cycleGAN_scheduler(optimizer, epoch, epoch_decay):
+def cycleGAN_scheduler(optimizer, epoch_decay):
 
     """Return a scheduler with proper learning rate based on current training epoch """
 
     def lr_rule(epoch):
 
-        # questi accorgimenti sono necessari se si vuole poter spezzare il training. Per un training unico non servirebbero
-        # si potrebbe anche usare un assert, ma a qul punto il programma si bloccherebbe
-        #weight = (epoch - opts.epochs)/(opts.epoch_decay + 1.0)
-        weight = (epoch - 100.0) / (epoch_decay + 1.0)
+        # Needed for restarting the training
+        weight = (epoch - epoch_decay) / (100 + 1.0)
 
-        return 1
+        return 1. - max(0., weight)
 
     scheduler = LambdaLR(optimizer, lr_lambda=lr_rule)
 
@@ -62,7 +60,6 @@ def print_cl_options(opts: argparse.Namespace) -> None:
     list_opts = [(k, v) for k, v in vars(opts).items()]
 
     print(tabulate(list_opts, headers=["Parameter", "Value"], tablefmt="psql"))
-
 
 
 def to_var(x, use_cuda: bool=False):
@@ -94,7 +91,7 @@ def make_checkpoint(
     optimizer_G: torch.optim.Optimizer,
     optimizer_D: torch.optim.Optimizer,
     scheduler_G: torch.optim.Optimizer,
-    checkpoint_dir
+    checkpoint_dir: Union[str, os.PathLike, bytes]
 ):
     
     """
